@@ -5,3 +5,5 @@ cmake-build-debug/
 .idea/
 
 *.gch
+
+lab03/Mad_scientist\.bmp
