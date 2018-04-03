@@ -4,6 +4,7 @@
 
 int main(void) {
 	int res;
+	//todo load
 	unsigned char ot[1024] = "abcdefghijklmnopqrstuvwxyz0123";  // open text
 	unsigned char ot2[1024] = "Naprosto tajny text, který je fakt hrozně úžasný, takže si ho musíte přečíst";
 	unsigned char st[1024];  // sifrovany text
