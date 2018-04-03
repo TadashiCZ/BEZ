@@ -21,8 +21,8 @@ int main(void) {
 
 	OpenSSL_add_all_ciphers();
 	/* sifry i hashe by se nahraly pomoci OpenSSL_add_all_algorithms() */
-	cipher = EVP_des_ecb();
-	//cipher = EVP_des_cbc();
+	//cipher = EVP_des_ecb();
+	cipher = EVP_des_cbc();
 
 	int stLength = 0;
 	int otLength = 0;
@@ -60,7 +60,7 @@ int main(void) {
 	unsigned long data_count = 0;
 	size_t res;
 
-	FILE *fOutput = fopen(FILE_NAME"_ecb.bmp", "w");
+	FILE *fOutput = fopen(FILE_NAME"_cbc.bmp", "w");
 	fwrite(head, sizeof(unsigned char), zac, fOutput);;
 	fseek(fInput, zac, SEEK_SET);
 	while ((res = fread(buff, sizeof(unsigned char), BUFFER_SIZE, fInput))) {
@@ -77,11 +77,10 @@ int main(void) {
 
 
 
-	
+
 	printf("Nyni se soubor desifruje...\n");
-	scanf("\n");
-	fInput = fopen(FILE_NAME"_ecb.bmp", "r");
-	fOutput = fopen(FILE_NAME"_dec.bmp", "w");
+	fInput = fopen(FILE_NAME"_cbc.bmp", "r");
+	fOutput = fopen(FILE_NAME"cbc_dec.bmp", "w");
 	fseek(fInput, zac, SEEK_SET);
 
 
@@ -90,19 +89,17 @@ int main(void) {
 	// Desifrovani
 	EVP_DecryptInit(&ctx, cipher, key, iv);  // nastaveni kontextu pro desifrovani
 	data_count = 0;
-
-
-
 	while ( (res = fread(buff, sizeof(unsigned char), BUFFER_SIZE, fInput))) {
 		data_count += res;
-
 		EVP_DecryptUpdate(&ctx, ot, &otLength, buff, res);  // desifrovani st
+		fwrite(ot, sizeof(unsigned char), otLength, fOutput);
 	}
 
 	EVP_DecryptFinal(&ctx, ot + otLength, &tmpLength);  // dokonceni (ziskani zbytku z kontextu)
-
-
-
+	fwrite(ot, sizeof(unsigned char), otLength, fOutput);
+	fclose(fOutput);
+	fclose(fInput);
+	printf("Zapsana delka dat v souboru: %lu\n", data_count);
 	free(head);
 	free(buff);
 
