@@ -21,8 +21,8 @@ int main(void) {
 
 	OpenSSL_add_all_ciphers();
 	/* sifry i hashe by se nahraly pomoci OpenSSL_add_all_algorithms() */
-	//cipher = EVP_des_ecb();
-	cipher = EVP_des_cbc();
+	cipher = EVP_des_ecb();
+	//cipher = EVP_des_cbc();
 
 	int stLength = 0;
 	int otLength = 0;
@@ -60,7 +60,7 @@ int main(void) {
 	unsigned long data_count = 0;
 	size_t res;
 
-	FILE *fOutput = fopen(FILE_NAME"_cbc.bmp", "w");
+	FILE *fOutput = fopen(FILE_NAME"_ecb.bmp", "w");
 	fwrite(head, sizeof(unsigned char), zac, fOutput);;
 	fseek(fInput, zac, SEEK_SET);
 	while ((res = fread(buff, sizeof(unsigned char), BUFFER_SIZE, fInput))) {
@@ -79,8 +79,8 @@ int main(void) {
 
 
 	printf("Nyni se soubor desifruje...\n");
-	fInput = fopen(FILE_NAME"_cbc.bmp", "r");
-	fOutput = fopen(FILE_NAME"cbc_dec.bmp", "w");
+	fInput = fopen(FILE_NAME"_ecb.bmp", "r");
+	fOutput = fopen(FILE_NAME"_dec.bmp", "w");
 	fseek(fInput, zac, SEEK_SET);
 
 
