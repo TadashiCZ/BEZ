@@ -12,28 +12,43 @@
 
 #define BUFFER_SIZE 512
 
-int main(void) {
+int main(int argc, char *argv[]) {
 	unsigned char ot[MAX_LENGTH];  // otevreny text
 	unsigned char st[MAX_LENGTH];  // sifrovany text
 	unsigned char key[EVP_MAX_KEY_LENGTH] = "ToToNeNI TaJNY NE";  // klic pro sifrovani
 	unsigned char iv[EVP_MAX_IV_LENGTH] = "123ciaL. VEktor";  // inicializacni vektor
 	const EVP_CIPHER *cipher;
-
+	if (argc != 2){
+		printf("Use of app: One argument, \"cbc\" or \"ecb\", whichever you want to use.\n");
+		return 1;
+	}
 	OpenSSL_add_all_ciphers();
 	/* sifry i hashe by se nahraly pomoci OpenSSL_add_all_algorithms() */
-	cipher = EVP_des_ecb();
-	//cipher = EVP_des_cbc();
+	char * cbc = "cbc";
+	char * ecb = "ecb";
+	char * cipherType = (char*) malloc(4);
+	if ( !strncmp(argv[1], cbc, 3)) {
+		cipher = EVP_des_cbc();
+		cipherType = "cbc";
+	} else if ( !strncmp(argv[1], ecb, 3)) {
+		cipherType = "ecb";
+		cipher = EVP_des_ecb();
+	} else {
+		printf("Use of app: One argument, \"cbc\" or \"ecb\", whichever you want to use.\n");
+		return 1;
+	}
+
 
 	int stLength = 0;
 	int otLength = 0;
-	int i;
 	int tmpLength = 0;
 	EVP_CIPHER_CTX ctx; // struktura pro kontext
 
 	FILE *fInput = fopen(FILE_NAME".bmp", "r");
 
+
 	if ( !fInput ) {
-		perror("Error when attempting to read file "FILE_NAME"./n");
+		perror("Nepovedlo se otevřít soubor "FILE_NAME"./n");
 		return 1;
 	}
 
@@ -61,7 +76,13 @@ int main(void) {
 	size_t res;
 
 	FILE *fOutput = fopen(FILE_NAME"_ecb.bmp", "w");
-	fwrite(head, sizeof(unsigned char), zac, fOutput);;
+	if (strncmp(cipherType, cbc, 3)){
+		fclose(fOutput);
+		fOutput = fopen(FILE_NAME"_cbc.bmp", "w");
+	}
+
+
+	fwrite(head, sizeof(unsigned char), zac, fOutput);
 	fseek(fInput, zac, SEEK_SET);
 	while ((res = fread(buff, sizeof(unsigned char), BUFFER_SIZE, fInput))) {
 		data_count += res;
@@ -76,11 +97,26 @@ int main(void) {
 	printf("Nactena delka dat v souboru: %lu\n", data_count);
 
 
-
-
 	printf("Nyni se soubor desifruje...\n");
+
+
 	fInput = fopen(FILE_NAME"_ecb.bmp", "r");
+
+	if (strncmp(cipherType, cbc, 3)){
+		fclose(fInput);
+		fInput = fopen(FILE_NAME"_cbc.bmp", "w");
+	}
+
+	if ( !fInput ) {
+		perror("Nepovedlo se načíst soubor "FILE_NAME"_ecb.bmp./n");
+		return 1;
+	}
 	fOutput = fopen(FILE_NAME"_dec.bmp", "w");
+	if ( !fOutput ) {
+		perror("Nepovedlo se otevřít soubor "FILE_NAME"_dec.bmp k zápisu./n");
+		return 1;
+	}
+
 	fseek(fInput, zac, SEEK_SET);
 
 
@@ -89,7 +125,7 @@ int main(void) {
 	// Desifrovani
 	EVP_DecryptInit(&ctx, cipher, key, iv);  // nastaveni kontextu pro desifrovani
 	data_count = 0;
-	while ( (res = fread(buff, sizeof(unsigned char), BUFFER_SIZE, fInput))) {
+	while ((res = fread(buff, sizeof(unsigned char), BUFFER_SIZE, fInput))) {
 		data_count += res;
 		EVP_DecryptUpdate(&ctx, ot, &otLength, buff, res);  // desifrovani st
 		fwrite(ot, sizeof(unsigned char), otLength, fOutput);
@@ -97,8 +133,10 @@ int main(void) {
 
 	EVP_DecryptFinal(&ctx, ot + otLength, &tmpLength);  // dokonceni (ziskani zbytku z kontextu)
 	fwrite(ot, sizeof(unsigned char), otLength, fOutput);
+
 	fclose(fOutput);
 	fclose(fInput);
+
 	printf("Zapsana delka dat v souboru: %lu\n", data_count);
 	free(head);
 	free(buff);
