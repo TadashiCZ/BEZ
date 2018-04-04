@@ -18,25 +18,13 @@ int main(int argc, char *argv[]) {
 	unsigned char key[EVP_MAX_KEY_LENGTH] = "ToToNeNI TaJNY NE";  // klic pro sifrovani
 	unsigned char iv[EVP_MAX_IV_LENGTH] = "123ciaL. VEktor";  // inicializacni vektor
 	const EVP_CIPHER *cipher;
-	if (argc != 2){
-		printf("Use of app: One argument, \"cbc\" or \"ecb\", whichever you want to use.\n");
-		return 1;
-	}
+
+
 	OpenSSL_add_all_ciphers();
 	/* sifry i hashe by se nahraly pomoci OpenSSL_add_all_algorithms() */
-	char * cbc = "cbc";
-	char * ecb = "ecb";
-	char * cipherType = (char*) malloc(4);
-	if ( !strncmp(argv[1], cbc, 3)) {
-		cipher = EVP_des_cbc();
-		cipherType = "cbc";
-	} else if ( !strncmp(argv[1], ecb, 3)) {
-		cipherType = "ecb";
-		cipher = EVP_des_ecb();
-	} else {
-		printf("Use of app: One argument, \"cbc\" or \"ecb\", whichever you want to use.\n");
-		return 1;
-	}
+		cipher = EVP_des_cbc(); // better one
+	//	cipher = EVP_des_ecb(); // worse one
+
 
 
 	int stLength = 0;
@@ -45,7 +33,6 @@ int main(int argc, char *argv[]) {
 	EVP_CIPHER_CTX ctx; // struktura pro kontext
 
 	FILE *fInput = fopen(FILE_NAME".bmp", "r");
-
 
 	if ( !fInput ) {
 		perror("Nepovedlo se otevřít soubor "FILE_NAME"./n");
@@ -76,13 +63,7 @@ int main(int argc, char *argv[]) {
 	size_t res;
 
 	FILE *fOutput = fopen(FILE_NAME"_ecb.bmp", "w");
-	if (strncmp(cipherType, cbc, 3)){
-		fclose(fOutput);
-		fOutput = fopen(FILE_NAME"_cbc.bmp", "w");
-	}
-
-
-	fwrite(head, sizeof(unsigned char), zac, fOutput);
+	fwrite(head, sizeof(unsigned char), zac, fOutput);;
 	fseek(fInput, zac, SEEK_SET);
 	while ((res = fread(buff, sizeof(unsigned char), BUFFER_SIZE, fInput))) {
 		data_count += res;
@@ -98,15 +79,7 @@ int main(int argc, char *argv[]) {
 
 
 	printf("Nyni se soubor desifruje...\n");
-
-
 	fInput = fopen(FILE_NAME"_ecb.bmp", "r");
-
-	if (strncmp(cipherType, cbc, 3)){
-		fclose(fInput);
-		fInput = fopen(FILE_NAME"_cbc.bmp", "w");
-	}
-
 	if ( !fInput ) {
 		perror("Nepovedlo se načíst soubor "FILE_NAME"_ecb.bmp./n");
 		return 1;
