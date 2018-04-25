@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
 				printf("%02x", hash[i]);
 			}
 			printf("\n");
-			if ( cnt >= 20 ) {
+			if ( cnt >= 10 ) {
 				break;
 			}
 		}
