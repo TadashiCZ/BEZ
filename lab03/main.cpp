@@ -70,7 +70,7 @@ int main(int argc, char * argv[] ) {
 	}
 
 	fseek(fInput, 0L, SEEK_END);
-	unsigned int filesize = ftell(fInput);
+	long int filesize = ftell(fInput);
 	fseek(fInput, 0L, SEEK_SET);
 
 	int stLength = 0;
@@ -123,44 +123,11 @@ int main(int argc, char * argv[] ) {
 		fwrite( st, sizeof( unsigned char ), stLength, fOutput );
 	}
 	EVP_CipherFinal( & ctx, st, & stLength );  // dokonceni (ziskani zbytku z kontextu)
+	//todo kontrolovat padding
 	fwrite( st, sizeof( unsigned char ), stLength, fOutput );
 	fclose( fOutput );
 	fclose( fInput );
 	printf( "Nactena delka dat v souboru: %lu\n", data_count );
-
-/*
-	printf( "Nyni se soubor desifruje...\n" );
-	fInput = fopen( FILE_NAME"_ecb.bmp", "r" );
-	if ( !fInput ) {
-		perror( "Nepovedlo se načíst soubor " FILE_NAME "_ecb.bmp./n" );
-		return 1;
-	}
-	fOutput = fopen( FILE_NAME"_dec.bmp", "w" );
-	if ( !fOutput ) {
-		perror( "Nepovedlo se otevřít soubor " FILE_NAME "_dec.bmp k zápisu./n" );
-		return 1;
-	}
-
-	fseek( fInput, zac, SEEK_SET );
-
-
-	fwrite( head, sizeof( unsigned char ), count, fOutput );
-
-	// Desifrovani
-	EVP_DecryptInit( & ctx, cipher, key, iv );  // nastaveni kontextu pro desifrovani
-	data_count = 0;
-	while ( (res = fread( buff, sizeof( unsigned char ), BUFFER_SIZE, fInput )) ) {
-		data_count += res;
-		EVP_DecryptUpdate( & ctx, ot, & otLength, buff, res );  // desifrovani st
-		fwrite( ot, sizeof( unsigned char ), otLength, fOutput );
-	}
-
-	EVP_DecryptFinal( & ctx, ot + otLength, & tmpLength );  // dokonceni (ziskani zbytku z kontextu)
-	fwrite( ot, sizeof( unsigned char ), otLength, fOutput );
-
-	fclose( fOutput );
-	fclose( fInput );
-*/
 	printf( "Zapsana delka dat v souboru: %lu\n", data_count );
 	free( head );
 	free( buff );
