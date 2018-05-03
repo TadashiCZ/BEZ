@@ -1,50 +1,40 @@
-#include <iostream>
+#include <cstdlib>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
-#include <openssl/rand.h>
 #include <cstring>
+#include <iostream>
+#include <string>
 
 #define INIT_SIZE 20
-#define BUFFER_SIZE 512
+
+#define BUFFER_SIZE 16384
+
+#define TEMP_FILE_PATH "hopeNoOneNamesFileLikeTheseBecauseItWouldDelteYourFiles.pom"
 
 int main(int argc, char * argv[]) {
-	if ( argc < 5 ) {
-		std::cout << "Usage: <mode> <public/private key path> <file to de/cipher> <output filename>" << std::endl;
-		return 1;
+	if ( argc != 5 ) {
+		printf( "Usage: <mode (-e/-d)> <public/private_key_file> <input_data_file> <output_file>\n" );
+		return -1;
 	}
-
-
 	std::string mode = argv[1];
-	std::string keyPath = argv[2];
-	std::string inputFilename = argv[3];
-	std::string outputfFilename = argv[4];
-	int encrypt;
-
-	if ( mode == "-e" ) {
-		encrypt = 1;
-	} else if ( mode == "-d" ) {
-		encrypt = 0;
-	} else {
-		printf( "Use of application: -e|-d ecb|cbc var-filename\n" );
-		return 1;
-	}
-
+	std::string key = argv[2];
+	std::string inputName = argv[3];
+	std::string outputName = argv[4];
 	OpenSSL_add_all_ciphers();
 
-	if ( encrypt ) {
-		FILE * f_pubkey = fopen( keyPath.c_str(), "r" );
+	if ( mode == "-e" ) {
+		FILE * f_pubkey = fopen( key.c_str(), "r" );
 		if ( !f_pubkey ) {
-			std::cout << "Failed to read file with the key: " << keyPath << "." << std::endl;
+			printf( "Failed to read public key: %s.\n", key.c_str() );
 			return -3;
 		}
-
 		EVP_PKEY * pubkey = PEM_read_PUBKEY( f_pubkey, NULL, NULL, NULL );
 		fclose( f_pubkey );
 
 		// Inicializace
-		unsigned char * my_enc_key = ( unsigned char * ) malloc( EVP_PKEY_size( pubkey ) );        // symetric cipher enrypted key
+		auto * my_enc_key = ( unsigned char * ) malloc( EVP_PKEY_size( pubkey ) );
 		int my_enc_key_length;
-		unsigned char iv[EVP_MAX_IV_LENGTH]; // buffer for the init. vector
+		unsigned char iv[EVP_MAX_IV_LENGTH];
 		EVP_CIPHER_CTX ctx;
 
 		const EVP_CIPHER * cipher = EVP_des_cbc();
@@ -52,23 +42,26 @@ int main(int argc, char * argv[]) {
 		const int key_bitlen = 64;
 
 		if ( !EVP_SealInit( &ctx, cipher, &my_enc_key, &my_enc_key_length, iv, &pubkey, 1 ) ) {
-			std::cout << "SealInit failed." << std::endl;
+			printf( "SealInit failed.\n" );
 			return 7;
 		}
 
+		printf( "Klic zasifrovan do %d bytu.\n", my_enc_key_length );
+
+		// Sifruj datovy soubor
 		unsigned char buff[BUFFER_SIZE];
 		unsigned char buff_out[BUFFER_SIZE];
 		int datalen = 0;
 		int outlen = 0;
 
-		FILE * fInput = fopen( inputFilename.c_str(), "r" );
+		FILE * fInput = fopen( inputName.c_str(), "r" );
 		if ( !fInput ) {
-			printf( "Nemuzu otevrit vstupni datovy soubor %s.\n", inputFilename.c_str() );
+			printf( "Nemuzu otevrit vstupni datovy soubor %s.\n", inputName.c_str() );
 			return -2;
 		}
-		FILE * fOutput = fopen( outputfFilename.c_str(), "w" );
+		FILE * fOutput = fopen( TEMP_FILE_PATH, "w" );
 		if ( !fOutput ) {
-			printf( "Nemuzu otevrit vystupni datovy soubor %s.\n", outputfFilename.c_str() );
+			printf( "Nemuzu otevrit vystupni datovy soubor %s.\n", outputName.c_str() );
 			return -2;
 		}
 
@@ -82,7 +75,7 @@ int main(int argc, char * argv[]) {
 			datalen += outlen;
 		}
 		if ( !datalen ) {
-			printf( "Nic jsem nezasifroval z vstupniho datoveho souboru %s.\n", argv[1] );
+			printf( "Nic jsem nezasifroval z vstupniho datoveho souboru %s.\n", inputName.c_str() );
 			return -2;
 		}
 
@@ -95,15 +88,16 @@ int main(int argc, char * argv[]) {
 
 		fclose( fInput );
 		fclose( fOutput );
+		printf( "Zasifroval jsem datovy soubor do delky %d bytu.\n", datalen );
 
-		fOutput = ( argc == 4 ) ? fopen( outputfFilename.c_str(), "w" ) : stdout;
+		fOutput = fopen( outputName.c_str(), "w" );
 
 		fprintf( fOutput, "%s %s %d %d\n", cipher_str, cipher_mode_str, key_bitlen, EVP_MAX_IV_LENGTH );
 		fwrite( iv, sizeof( unsigned char ), EVP_MAX_IV_LENGTH, fOutput );
 		fwrite( my_enc_key, sizeof( unsigned char ), my_enc_key_length, fOutput );
 
 		fprintf( fOutput, "%d\n", datalen );
-		fInput = fopen( inputFilename.c_str(), "r" );
+		fInput = fopen( TEMP_FILE_PATH, "r" );
 		while ( ( res = fread( buff, sizeof( unsigned char ), BUFFER_SIZE, fInput ) ) )
 			fwrite( buff, sizeof( unsigned char ), res, fOutput );
 
@@ -112,14 +106,20 @@ int main(int argc, char * argv[]) {
 
 		if ( fOutput != stdout )
 			fclose( fOutput );
-		return 0;
-	} else {
 
+		if (remove(TEMP_FILE_PATH)){
+			printf("Failed to delete temp file\n");
+		}
+		return 0;
+
+	} else if ( mode == "-d" ) {
+
+		OpenSSL_add_all_ciphers();
 
 		// Nacti verejny klic
-		FILE * f_privkey = fopen( keyPath.c_str(), "r" );
+		FILE * f_privkey = fopen( key.c_str(), "r" );
 		if ( !f_privkey ) {
-			printf( "Nemuzu precist klicovy soubor %s.\n", argv[2] );
+			printf( "Nemuzu precist klicovy soubor %s.\n", key.c_str() );
 			return -3;
 		}
 		EVP_PKEY * privkey = PEM_read_PrivateKey( f_privkey, NULL, NULL, NULL );
@@ -135,14 +135,14 @@ int main(int argc, char * argv[]) {
 		char cipher_str[16];
 		char cipher_mode_str[16];
 
-		FILE * fInput = fopen( argv[1], "r" );
+		FILE * fInput = fopen( inputName.c_str(), "r" );
 		if ( !fInput ) {
-			printf( "Nemuzu otevrit vstupni soubor %s.\n", argv[1] );
+			printf( "Nemuzu otevrit vstupni soubor %s.\n", inputName.c_str() );
 			return -2;
 		}
 
 		if ( fscanf( fInput, "%s %s %d %d\n", cipher_str, cipher_mode_str, &key_bitlen, &iv_length ) != 4 ) {
-			printf( "Problem pri cteni parametru ze souboru %s.\n", argv[1] );
+			printf( "Problem pri cteni parametru ze souboru %s.\n", inputName.c_str() );
 			return -3;
 		}
 
@@ -188,7 +188,7 @@ int main(int argc, char * argv[]) {
 
 		int enclen = 0;
 		if ( fscanf( fInput, "%d\n", &enclen ) != 1 || enclen <= 0 ) {
-			printf( "Problem pri cteni delky sifrovanych dat z %s.\n", argv[1] );
+			printf( "Problem pri cteni delky sifrovanych dat z %s.\n", inputName.c_str() );
 			return -13;
 		}
 
@@ -207,13 +207,13 @@ int main(int argc, char * argv[]) {
 		int datalen = 0;
 		int inlen = 0;
 
-		FILE * fOutput = ( argc == 4 ) ? fopen( argv[3], "w" ) : stdout;
+		FILE * fOutput = fopen( outputName.c_str(), "w" );
 		if ( !fOutput ) {
-			printf( "Nemuzu otevrit vystupni datovy soubor %s.\n", argv[3] );
+			printf( "Nemuzu otevrit vystupni datovy soubor %s.\n", outputName.c_str() );
 			return -2;
 		}
 
-		int res;
+		size_t res;
 		while ( ( res = fread( buff, sizeof( unsigned char ), BUFFER_SIZE, fInput ) ) > 0 ) {
 			if ( ( inlen += res ) > enclen )
 				break;
@@ -225,7 +225,7 @@ int main(int argc, char * argv[]) {
 			datalen += outlen;
 		}
 		if ( !inlen ) {
-			printf( "Nic jsem neprecetl z vstupniho datoveho souboru %s.\n", argv[1] );
+			printf( "Nic jsem neprecetl z vstupniho datoveho souboru %s.\n", inputName.c_str() );
 			return -2;
 		} else if ( inlen != enclen ) {
 			printf( "Delka vstupnich dat nesouhlasi: %d != %d\n", inlen, enclen );
@@ -249,9 +249,10 @@ int main(int argc, char * argv[]) {
 
 		return 0;
 
-
+	} else {
+		printf( "Usage: <mode (-e/-d)> <input_data_file> <public/private_key_file> <output_file>\n" );
+		return 1;
 	}
 
 
-	return 0;
 }
