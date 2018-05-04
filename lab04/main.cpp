@@ -10,7 +10,7 @@
 
 #define BUFFER_SIZE 16384
 
-#define TEMP_FILE_PATH "hopeNoOneNamesFileLikeTheseBecauseItWouldDelteYourFiles.pom"
+#define TEMP_FILE_PATH "hopeNoOneNamesFileLikeTheseBecauseItWouldDeleteYourFiles.pom"
 
 int main(int argc, char * argv[]) {
 	if ( argc != 5 ) {
