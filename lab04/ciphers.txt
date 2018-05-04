@@ -1,0 +1,9 @@
+// const EVP_CIPHER * cipher = EVP_des_ecb(); const char * cipher_str = "DES", *cipher_mode_str = "ECB"; const int key_bitlen = 64;
+	// const EVP_CIPHER * cipher = EVP_des_ede(); const char * cipher_str = "DES", *cipher_mode_str = "EDE"; const int key_bitlen = 64;
+	// const EVP_CIPHER * cipher = EVP_aes_256_gcm(); const char * cipher_str = "AES", *cipher_mode_str = "GCM"; const int key_bitlen = 256;
+	// const EVP_CIPHER * cipher = EVP_aes_192_gcm(); const char * cipher_str = "AES", *cipher_mode_str = "GCM"; const int key_bitlen = 192;
+	// const EVP_CIPHER * cipher = EVP_aes_128_gcm(); const char * cipher_str = "AES", *cipher_mode_str = "GCM"; const int key_bitlen = 128;
+	// const EVP_CIPHER * cipher = EVP_aes_256_ccm(); const char * cipher_str = "AES", *cipher_mode_str = "CCM"; const int key_bitlen = 256;
+	// const EVP_CIPHER * cipher = EVP_aes_192_ccm(); const char * cipher_str = "AES", *cipher_mode_str = "CCM"; const int key_bitlen = 192;
+	// const EVP_CIPHER * cipher = EVP_aes_128_ccm(); const char * cipher_str = "AES", *cipher_mode_str = "CCM"; const int key_bitlen = 128;
+	// const EVP_CIPHER * cipher = EVP_get_cipherbyname("RC4"); const char * cipher_str = "RC4", *cipher_mode_str = "X"; const int key_bitlen = 0;
