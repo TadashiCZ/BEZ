@@ -76,7 +76,8 @@ int main(int argc, char * argv[]) {
 		return -8;
 	}
 	fclose( fPEM );
-	SSL_CTX_load_verify_locations( ssl_ctx, "DigiCertAssuredIDRootCA.crt", NULL );
+	SSL_CTX_set_default_verify_paths(ssl_ctx);
+	//SSL_CTX_load_verify_locations( ssl_ctx, NULL,  );
 	int result = SSL_get_verify_result( ssl );
 	if ( X509_V_OK == result ) {
 		printf( "Verify result: %d\n", X509_V_OK );
